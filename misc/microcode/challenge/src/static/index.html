@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microcode Compiler</title>
+</head>
+<body>
+    <header>
+        <h1>Microcode Compiler</h1>
+        <p>Welcome to the compilation server used to compile our newest AI CPU's microcode.</p>
+    </header>
+    <form method="post" enctype="multipart/form-data" action="/compile.php">
+        <fieldset>
+            <legend>Compilation Tool</legend>
+            <p>Please upload your Rust project with the microcode to be compiled!</p>
+            <input type="file" name="zip" accept="application/zip" />
+            <br />
+            <button>Compile!</button>
+        </fieldset>
+    </form>
+
+    
+</body>
+</html>

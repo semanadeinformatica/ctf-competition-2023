@@ -1,0 +1,5 @@
+To get a better-looking shell, you can run:
+
+python3 -c "import pty; pty.spawn('/bin/bash')"
+
+Have fun!

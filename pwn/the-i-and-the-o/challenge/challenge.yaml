@@ -1,0 +1,101 @@
+apiVersion: kube-ctf.downunderctf.com/v1
+kind: IsolatedChallenge
+metadata:
+  name: the-i-and-the-o
+spec:
+  expires: 3600
+  available_at: 1698450578 # TODO: Change to day before CTF
+  type: pwn
+  template: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: "ctf-{{ deployment_id }}"
+      namespace: kubectf-challenges-isolated
+      labels:
+        kube-ctf.downunderctf.com/type: pwn
+        kube-ctf.downunderctf.com/name: the-i-and-the-o
+        isolated-challenge.kube-ctf.downunderctf.com/deployment: "{{ deployment_id }}"
+        isolated-challenge.kube-ctf.downunderctf.com/owner: "{{ owner_id }}"
+      annotations:
+        janitor/expires: "{{ expires }}"
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          isolated-challenge.kube-ctf.downunderctf.com/deployment: "{{ deployment_id }}"
+          isolated-challenge.kube-ctf.downunderctf.com/owner: "{{ owner_id }}"
+      template:
+        metadata:
+          labels:
+            role: challenge
+            kube-ctf.downunderctf.com/type: pwn
+            kube-ctf.downunderctf.com/name: the-i-and-the-o
+            isolated-challenge.kube-ctf.downunderctf.com/deployment: "{{ deployment_id }}"
+            isolated-challenge.kube-ctf.downunderctf.com/owner: "{{ owner_id }}"
+        spec:
+          enableServiceLinks: false
+          automountServiceAccountToken: false
+          containers:
+          - name: challenge
+            image: registry.sinf.pt/ctfs-sinf-2023/challs/the-i-and-the-o:1.0.0
+            resources:
+              limits:
+                cpu: 20m
+                memory: 64Mi
+              requests:
+                cpu: 10m
+                memory: 32Mi
+            ports:
+            - containerPort: 5000
+              name: port-5000
+            securityContext:
+              allowPrivilegeEscalation: true
+              privileged: true
+          imagePullSecrets:
+          - name: image-registry-credentials
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: "ctf-{{ deployment_id }}"
+      namespace: kubectf-challenges-isolated
+      labels:
+        kube-ctf.downunderctf.com/type: pwn
+        kube-ctf.downunderctf.com/name: the-i-and-the-o
+        isolated-challenge.kube-ctf.downunderctf.com/deployment: "{{ deployment_id }}"
+        isolated-challenge.kube-ctf.downunderctf.com/owner: "{{ owner_id }}"
+      annotations:
+        janitor/expires: "{{ expires }}"
+    spec:
+      selector:
+        role: challenge
+        isolated-challenge.kube-ctf.downunderctf.com/deployment: "{{ deployment_id }}"
+      ports:
+        - port: 5000
+          name: port-5000
+    ---
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: IngressRouteTCP
+    metadata:
+      name: ingress-ctf-{{ deployment_id }}
+      namespace: kubectf-challenges-isolated
+      labels:
+        kube-ctf.downunderctf.com/type: pwn
+        kube-ctf.downunderctf.com/name: the-i-and-the-o
+        isolated-challenge.kube-ctf.downunderctf.com/deployment: "{{ deployment_id }}"
+        isolated-challenge.kube-ctf.downunderctf.com/owner: "{{ owner_id }}"
+      annotations:
+        janitor/expires: "{{ expires }}"
+    spec:
+      entryPoints:
+        - web2
+      tls: # Replace by certificate secret name
+        secretName: kubectf-cert-challenges-isolated
+      routes:
+        - match: HostSNI(`{{ deployment_id }}.{{ domain }}`)
+          kind: Rule
+          priority: 10
+          services:
+          - name: ctf-{{ deployment_id }}
+            port: 5000
